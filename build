@@ -1,0 +1,1 @@
+sudo gcc -o ./bin/dht11 dht11.c -lwiringPi -lwiringPiDev
