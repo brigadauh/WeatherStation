@@ -7,14 +7,14 @@
 int dht11_dat[5] = { 0, 0, 0, 0, 0 };
  
 void writeData(int h0, int h1, int t0, int t1) {
-	FILE *f = fopen("file.txt", "a");
+	FILE *f = fopen("data.json", "a");
 	if (f == NULL)
 	{
 	    printf("Error opening file!\n");
 	    exit(1);
 	}
 	
-	fprintf(f, "\"t\",%d.%d,\"h\",%d.%d\n", t0,t1,h0,h1);
+	fprintf(f, "{\"t\":\"%d.%d\",\"h\":\"%d.%d\"}\n", t0,t1,h0,h1);
 	fclose(f);
 }
 void read_dht11_dat()
