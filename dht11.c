@@ -2,20 +2,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 #define MAXTIMINGS	85
 #define DHTPIN		7
 int dht11_dat[5] = { 0, 0, 0, 0, 0 };
  
 void writeData(int h0, int h1, int t0, int t1) {
-	FILE *f = fopen("data.json", "a");
-	if (f == NULL)
-	{
+ 	char *data_str = (char*)malloc(255 * sizeof(char));
+	int status;
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8888/api/weather/temphumidity/add\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	status = system(data_str);
+	if (status!=0) {
+	  FILE *f = fopen("data.json", "a");
+	  if (f == NULL)
+	  {
 	    printf("Error opening file!\n");
 	    exit(1);
+	  }
+	  fprintf(f, "{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	  fclose(f);
 	}
-	
-	fprintf(f, "{\"t\":\"%d.%d\",\"h\":\"%d.%d\"}\n", t0,t1,h0,h1);
-	fclose(f);
 }
 void read_dht11_dat()
 {
@@ -23,7 +31,7 @@ void read_dht11_dat()
 	uint8_t counter		= 0;
 	uint8_t j		= 0, i;
 	float	f; 
- 
+
 	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
  
 	pinMode( DHTPIN, OUTPUT );
