@@ -136,11 +136,12 @@ int main( void )
  
 	if ( wiringPiSetup() == -1 )
 		exit( 1 );
- 
-	while ( 1 )
+	int nAttempts = 0;
+	while ( nAttempts <100 )
 	{
 		read_dht11_dat();
-		delay( 1000 ); 
+		delay( 1000 );
+		nAttempts++; 
 	}
  
 	return(0);
