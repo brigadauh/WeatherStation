@@ -12,8 +12,8 @@ void writeData(int h0, int h1, int t0, int t1) {
 	int status;
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
-	/*sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8888/api/weather/temphumidity/add\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-	status = system(data_str);*/
+	sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8888/api/weather/temphumidity/add\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	status = system(data_str);
 	if (status!=0) {
 	  FILE *f = fopen("data.json", "a");
 	  if (f == NULL)
@@ -62,7 +62,7 @@ int read_and_remove_Line() {
 	fclose(inFile);
 	fclose(outFile);
 	
-	// possible you have to remove old file here before
+	 //possible that you have to remove old file here before
 	printf("renaming...");
 	if( !rename(outFileName, inFileName) )
 	{
@@ -121,7 +121,7 @@ void read_dht11_dat()
 		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
 			dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3], f );
 		writeData(dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3]);
-		while (read_and_remove_Line()==0) {}
+		//while (read_and_remove_Line()==0) {}
 		exit(0);
 		
 	}else  {
