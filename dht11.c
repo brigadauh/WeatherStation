@@ -3,11 +3,26 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <unistd.h>
+#include <math.h>
+
 #define MAXTIMINGS	85
 #define DHTPIN		7
-int dht11_dat[5] = { 0, 0, 0, 0, 0 };
- 
-void writeData(int h0, int h1, int t0, int t1) {
+#define DHTMODEL	22
+int dhtXX_dat[5] = { 0, 0, 0, 0, 0 };
+
+static uint8_t sizecvt(const int read)
+{
+    /*digitalread() and friends from wiringPi are defined as returning a value
+      <256. However, they returned it as int(). this is a safety function */
+    if(read > 255 || read < 0)
+    {
+        printf("Invalid data from wiringPi library\n");
+	exit(EXIT_FAILURE);
+    }
+    return (uint8_t)read;
+} 
+void writeData(uint8_t h0, uint8_t h1, uint8_t t0, uint8_t t1) {
  	char *data_str = (char*)malloc(255 * sizeof(char));
 	int status;
 	time_t t = time(NULL);
@@ -25,6 +40,7 @@ void writeData(int h0, int h1, int t0, int t1) {
 	  fclose(f);
 	}
 }
+/*
 int read_and_remove_Line() {
 	char* inFileName = "data.json";
 	char* outFileName = "tmp.json";
@@ -44,7 +60,7 @@ int read_and_remove_Line() {
 	while( fgets(line, sizeof(line), inFile) != NULL )
 	{
 	    if(lineCount == 0){
-		sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '%s' http://192.168.1.3:8888/api/weather/temphumidity/add\n", line);
+		//sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '%s' http://192.168.1.3:8888/api/weather/temphumidity/add\n", line);
 		status = system(data_str);
 		if (status==0) {
 		   ret=0;
@@ -70,16 +86,18 @@ int read_and_remove_Line() {
 	}
 	return ret;
 }
+*/
 
-
-void read_dht11_dat()
+void read_dhtXX_dat()
 {
 	uint8_t laststate	= HIGH;
 	uint8_t counter		= 0;
 	uint8_t j		= 0, i;
 	float	f; 
-
-	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
+	double tempC;
+	double humid;
+	int isNegative = 0;
+	dhtXX_dat[0] = dhtXX_dat[1] = dhtXX_dat[2] = dhtXX_dat[3] = dhtXX_dat[4] = 0;
  
 	pinMode( DHTPIN, OUTPUT );
 	digitalWrite( DHTPIN, LOW );
@@ -91,7 +109,7 @@ void read_dht11_dat()
 	for ( i = 0; i < MAXTIMINGS; i++ )
 	{
 		counter = 0;
-		while ( digitalRead( DHTPIN ) == laststate )
+		while ( sizecvt(digitalRead( DHTPIN )) == laststate )
 		{
 			counter++;
 			delayMicroseconds( 1 );
@@ -100,31 +118,42 @@ void read_dht11_dat()
 				break;
 			}
 		}
-		laststate = digitalRead( DHTPIN );
+		laststate = sizecvt(digitalRead( DHTPIN ));
  
 		if ( counter == 255 )
 			break;
  
 		if ( (i >= 4) && (i % 2 == 0) )
 		{
-			dht11_dat[j / 8] <<= 1;
+			dhtXX_dat[j / 8] <<= 1;
 			if ( counter > 16 )
-				dht11_dat[j / 8] |= 1;
+				dhtXX_dat[j / 8] |= 1;
 			j++;
 		}
 	}
  
 	if ( (j >= 40) &&
-	     (dht11_dat[4] == ( (dht11_dat[0] + dht11_dat[1] + dht11_dat[2] + dht11_dat[3]) & 0xFF) ) )
+	     (dhtXX_dat[4] == ( (dhtXX_dat[0] + dhtXX_dat[1] + dhtXX_dat[2] + dhtXX_dat[3]) & 0xFF) ) )
 	{
-		f = dht11_dat[2] * 9. / 5. + 32;
+		if (DHTMODEL == 22) 
+		{
+		    humid = (dhtXX_dat[0] * 256 + dhtXX_dat[1]) * 0.1;
+		    dhtXX_dat[0] = (int)humid; dhtXX_dat[1] = (humid - (int) humid)* 100.0;
+		    tempC = ((dhtXX_dat[2] & 0x7F) * 256 + dhtXX_dat[3]) * 0.1;
+		    if ((dhtXX_dat[2] & 0x80) != 0) isNegative = 1;
+		    dhtXX_dat[2] = (int)tempC; dhtXX_dat[3] = (tempC - (int)tempC)* 100.0;
+		    if (isNegative == 1) dhtXX_dat[2] *=-1;
+		}
+		f = dhtXX_dat[2] * 9. / 5. + 32;
 		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
-			dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3], f );
-		writeData(dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3]);
+			dhtXX_dat[0], dhtXX_dat[1], dhtXX_dat[2], dhtXX_dat[3], f );
+		writeData(dhtXX_dat[0], dhtXX_dat[1], dhtXX_dat[2], dhtXX_dat[3]);
 		//while (read_and_remove_Line()==0) {}
 		exit(0);
 		
-	}else  {
+	}
+	else  
+	{
 		printf( "Data not good, skip\n" );
 	}
 }
@@ -132,14 +161,14 @@ void read_dht11_dat()
  
 int main( void )
 {
-	printf( "Raspberry Pi wiringPi DHT11 Temperature test program\n" );
+	printf( "Raspberry Pi wiringPi dhtXX Temperature test program\n" );
  
 	if ( wiringPiSetup() == -1 )
 		exit( 1 );
 	int nAttempts = 0;
 	while ( nAttempts <100 )
 	{
-		read_dht11_dat();
+		read_dhtXX_dat();
 		delay( 1000 );
 		nAttempts++; 
 	}
