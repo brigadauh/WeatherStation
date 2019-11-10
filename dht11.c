@@ -40,6 +40,24 @@ void writeData(uint8_t h0, uint8_t h1, uint8_t t0, uint8_t t1) {
 	  fclose(f);
 	}
 }
+void writeData22(float  humidity, float tempC) {
+ 	char *data_str = (char*)malloc(255 * sizeof(char));
+	int status;
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%.2f\",\"h\":\"%.2f\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8888/api/weather/temphumidity/add\n", tempC, humidity, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	status = system(data_str);
+	/*if (status!=0) {
+	  FILE *f = fopen("data.json", "a");
+	  if (f == NULL)
+	  {
+	    printf("Error opening file!\n");
+	    exit(1);
+	  }
+	  fprintf(f, "{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	  fclose(f);
+	} */
+}
 /*
 int read_and_remove_Line() {
 	char* inFileName = "data.json";
@@ -137,17 +155,23 @@ void read_dhtXX_dat()
 	{
 		if (DHTMODEL == 22) 
 		{
-		    humid = (dhtXX_dat[0] * 256 + dhtXX_dat[1]) * 0.1;
-		    dhtXX_dat[0] = (int)humid; dhtXX_dat[1] = (humid - (int) humid)* 100.0;
-		    tempC = ((dhtXX_dat[2] & 0x7F) * 256 + dhtXX_dat[3]) * 0.1;
+		    humid = (dhtXX_dat[0] * 256 + dhtXX_dat[1]) ;
+		    /*dhtXX_dat[0] = (int)humid; dhtXX_dat[1] = (humid - (int) humid)* 100.0;*/
+		    tempC = ((dhtXX_dat[2] & 0x7F) * 256 + dhtXX_dat[3]);
 		    if ((dhtXX_dat[2] & 0x80) != 0) isNegative = 1;
-		    dhtXX_dat[2] = (int)tempC; dhtXX_dat[3] = (tempC - (int)tempC)* 100.0;
-		    if (isNegative == 1) dhtXX_dat[2] *=-1;
+		    /*dhtXX_dat[2] = (int)tempC; dhtXX_dat[3] = (tempC - (int)tempC)* 100.0;*/
+		    if (isNegative == 1) tempC *=-1; /*dhtXX_dat[2] *=-1;*/
+		    printf("Humidity=%.2f %% Temperature = %.2f C\n",
+			(float)(humid/10.0), (float)(tempC/10.0));
+		    writeData22((float)humid/10.0, (float)tempC/10.0);
 		}
-		f = dhtXX_dat[2] * 9. / 5. + 32;
-		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
+		else {
+		    
+		    f = dhtXX_dat[2] * 9. / 5. + 32;
+		    printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
 			dhtXX_dat[0], dhtXX_dat[1], dhtXX_dat[2], dhtXX_dat[3], f );
-		writeData(dhtXX_dat[0], dhtXX_dat[1], dhtXX_dat[2], dhtXX_dat[3]);
+		    writeData(dhtXX_dat[0], dhtXX_dat[1], dhtXX_dat[2], dhtXX_dat[3]);
+		}
 		//while (read_and_remove_Line()==0) {}
 		exit(0);
 		
