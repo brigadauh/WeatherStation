@@ -178,7 +178,7 @@ void read_dhtXX_dat()
 	}
 	else  
 	{
-		printf( "Data not good, skip\n" );
+		printf( "Data not received, skip\n" );
 	}
 }
 
