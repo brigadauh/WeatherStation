@@ -27,7 +27,7 @@ void writeData(uint8_t h0, uint8_t h1, uint8_t t0, uint8_t t1) {
 	int status;
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
-	sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8888/api/weather/temphumidity/add\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	sprintf(data_str,"curl -X POST -H \"Content-Type: application/json\"  -d '{\"t\":\"%d.%d\",\"h\":\"%d.%d\",\"d\":\"%d-%d-%d %d:%d:%d\"}' http://192.168.1.3:8890/api/weather/temphumidity/add\n", t0,t1,h0,h1, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 	status = system(data_str);
 	if (status!=0) {
 	  FILE *f = fopen("data.json", "a");
